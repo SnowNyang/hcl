@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>HCL</title>
+<style>
+:root{--thumbc:#8d9aff;--bg:#1e1f26;--panel:#2a2c36;--sel:#30334a;--input:#15161c;--text:#e8e8ee;--sub:#b8bcd8;--line:#7db4ff;--linedim:#3d6a9e;--btn:#2f3140;--btnh:#444;--off:#555;--thumb:#3a3d4d}
+body.light{--thumbc:#ee6a9a;--bg:#ffffff;--panel:#f1f1f6;--sel:#ffe3ee;--input:#ffffff;--text:#222;--sub:#888;--line:#f4a6c0;--linedim:#f8d3e0;--btn:#ececf2;--btnh:#ddd;--off:#c9c9d3;--thumb:#e2e2ea}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:transparent;font-family:'Malgun Gothic',sans-serif;user-select:none;color:var(--text);font-size:16px}
+#app{position:relative;height:100%;border:5px solid var(--line);border-radius:24px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column}
+/* 상단 */
+#top{display:flex;flex-direction:column;height:66px;flex-shrink:0}
+#grip{height:18px;flex-shrink:0;border-bottom:3px solid var(--line);cursor:move;display:flex;align-items:center;justify-content:center}
+#grip::after{content:'';width:46px;height:4px;border-radius:2px;background:var(--thumb)}
+#grip:hover::after{background:var(--line)}
+#row1{flex:1;display:flex;align-items:stretch;min-height:0}
+#tabcol{flex:1;min-width:0;display:flex;flex-direction:column}
+#tabs{flex:1;min-height:0;display:flex;gap:6px;align-items:center;padding:0 10px 0 12px;overflow-x:auto;overflow-y:hidden}
+#tabs::-webkit-scrollbar{display:none}
+#bar{height:6px;flex-shrink:0;background:var(--linedim);position:relative}
+#thumb{position:absolute;bottom:-1px;left:0;width:100%;height:11px;background:var(--thumbc);border-radius:6px;cursor:grab;z-index:5}
+#thumb:active{cursor:grabbing}
+.wall{width:5px;background:var(--line);flex-shrink:0}
+#fixed{display:flex;align-items:center;gap:5px;padding:0 10px 0 8px;flex-shrink:0;border-bottom:6px solid var(--line)}
+.tab{display:flex;align-items:center;gap:5px;padding:4px 9px;background:var(--panel);border-radius:14px;cursor:pointer;border:2px solid transparent;white-space:nowrap;flex-shrink:0}
+.tab.sel{border-color:var(--line);background:var(--sel)}
+.dot{width:9px;height:9px;border-radius:50%;border:2px solid;display:inline-block}
+.dot.g{border-color:#3ddc84}.dot.g.full{background:#3ddc84}
+.dot.b{border-color:#4aa3ff}.dot.b.full{background:#4aa3ff}
+.x{display:none;opacity:.5;font-size:10px}.tab:hover .x{display:inline}.x:hover{opacity:1;color:#f66}
+#addwrap{position:relative}
+#addbtn{width:26px;height:26px;border-radius:50%;border:0;background:var(--line);color:#fff;font-size:16px;cursor:pointer;line-height:1}
+#menu{display:none;position:absolute;top:34px;right:-30px;width:175px;background:var(--panel);border:2px solid var(--line);border-radius:12px;padding:5px;z-index:50}
+.mi{padding:7px 10px;border-radius:8px;cursor:pointer}
+.mi:hover{background:var(--btn)}
+.mi.dis{opacity:.35;pointer-events:none}
+.mi.custom{border-top:1px solid var(--off);margin-top:3px;border-radius:0 0 8px 8px;color:var(--sub)}
+#addgame,.rn{font:inherit;padding:4px 10px;border-radius:12px;border:1px solid var(--line);background:var(--input);color:var(--text);width:130px;flex-shrink:0}
+.wbtn{width:22px;height:22px;border:0;border-radius:50%;background:var(--btn);color:var(--text);cursor:pointer;font-size:11px;padding:0}
+.wbtn:hover{background:var(--btnh)}
+/* 본문 */
+#content{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+#content::-webkit-scrollbar{width:5px}
+#content::-webkit-scrollbar-thumb{background:var(--thumb);border-radius:3px}
+.sec{padding:8px 12px 10px}
+#dy,#wk{border-bottom:2px solid var(--line)}
+.sec h3{margin:0 0 7px;font-size:16px;position:relative;text-align:center;line-height:22px;color:var(--sub);letter-spacing:2px}
+.plus{position:absolute;right:0;top:0;width:22px;height:22px;border:0;border-radius:50%;background:var(--btn);color:var(--text);cursor:pointer;padding:0}
+.plus:hover{background:var(--line);color:#fff}
+.row{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--panel);border-radius:8px;margin-bottom:4px}
+.name{flex:1;transition:.3s;word-break:break-all}
+.pw{width:26px;height:15px;border-radius:8px;background:var(--off);position:relative;cursor:pointer;transition:.3s;flex-shrink:0}
+.pw::after{content:'';position:absolute;top:2px;left:2px;width:11px;height:11px;border-radius:50%;background:#fff;transition:.3s}
+.pw.on{background:var(--line)}.pw.on::after{left:13px}
+.row input[type=checkbox]{width:18px;height:18px;cursor:pointer;flex-shrink:0;margin:0}
+.row.off .name{opacity:.35}
+.row.off input{pointer-events:none;opacity:.3}
+.tab.lift{transform:scale(1.07);box-shadow:0 4px 14px rgba(0,0,0,.45);outline:2px solid var(--line);position:relative;z-index:3}
+.tn{font:inherit;flex:1;min-width:0;padding:2px 6px;border-radius:6px;border:1px solid var(--line);background:var(--input);color:var(--text)}
+.grip2{cursor:grab;color:var(--sub);opacity:.5;font-size:13px;letter-spacing:-3px;width:10px;text-align:center;flex-shrink:0;line-height:1}
+.grip2:hover{opacity:1}.grip2.ph{visibility:hidden;cursor:default}
+.row.dragging{opacity:.75;outline:2px solid var(--line)}
+body.dragging,body.dragging *{cursor:grabbing!important}
+.lk{flex-basis:100%;font-size:12px;color:var(--sub);display:flex;align-items:center;gap:6px;cursor:pointer}
+.lk input{margin:0}
+.cycle.done .name{color:#b48cff;opacity:.5}
+body.light .daily.done .name{color:#1f9a56;opacity:.75}
+body.light .weekly.done .name{color:#2a74c4;opacity:.75}
+body.light .cycle.done .name{color:#7a52d4;opacity:.75}
+.rem{font-size:12px;color:var(--sub);cursor:pointer;white-space:nowrap;padding:2px 8px;border-radius:10px;background:var(--btn)}
+.rem:hover{background:var(--line);color:#fff}
+.ci{font:inherit;width:44px;padding:3px 4px;border-radius:6px;border:1px solid var(--line);background:var(--input);color:var(--text)}
+.ci.n{width:auto;flex:1;min-width:0}
+.cform{display:flex;gap:6px;align-items:center;margin-bottom:6px;font-size:13px}
+.ok{font:inherit;font-size:12px;border:0;border-radius:8px;padding:4px 10px;cursor:pointer;background:var(--line);color:#fff}
+.daily.done .name{color:#3ddc84;opacity:.5}
+.weekly.done .name{color:#4aa3ff;opacity:.5}
+.del{display:none;opacity:.5;cursor:pointer;font-size:10px}.row:hover .del{display:inline}.del:hover{opacity:1;color:#f66}
+.addrow input{font:inherit;width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--input);color:var(--text);margin-bottom:4px}
+.empty{opacity:.55;text-align:center;margin-top:40px;line-height:1.8}
+/* 하단 */
+#footer{height:30px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 12px 0 16px;border-top:1px solid rgba(128,128,128,.25);font-size:11px;color:var(--sub);opacity:.7}
+#gear{border:0;background:transparent;color:var(--sub);font-size:16px;cursor:pointer;padding:0 2px;line-height:1}
+#gear:hover{color:var(--line)}
+/* 환경설정 */
+#modal,#cmodal,#rmodal{display:none;position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center}
+#card,#rcard{width:250px;background:var(--bg);border:3px solid var(--line);border-radius:16px;padding:14px 16px 8px}
+#card h4,#rcard h4{margin:0 0 10px;font-size:17px;display:flex;justify-content:space-between;align-items:center}
+#mclose{cursor:pointer;opacity:.5}#mclose:hover{opacity:1}
+.srow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid rgba(128,128,128,.2)}
+.cbtns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.cbtns button{font:inherit;border:0;border-radius:10px;padding:6px 16px;cursor:pointer;background:var(--btn);color:var(--text)}
+#cyes{background:var(--line);color:#fff}
+#cmsg{padding:6px 0}
+.hint{font-size:12px;opacity:.5;padding:4px 0 8px;line-height:1.5}
+
+/* 전체 체크 버튼 */
+.all{position:absolute;left:0;top:0;height:22px;border:0;border-radius:11px;padding:0 9px;background:var(--btn);color:var(--text);font:inherit;font-size:12px;letter-spacing:0;cursor:pointer}
+.all:hover{background:var(--line);color:#fff}
+/* 하단 */
+#footer{opacity:.9}
+.fr{display:flex;gap:4px;align-items:center}
+.fb{border:0;background:transparent;color:var(--sub);font:inherit;font-size:12px;cursor:pointer;padding:3px 7px;border-radius:9px;white-space:nowrap}
+.fb:hover{background:var(--btn);color:var(--text)}
+/* 환경설정 */
+#cmodal{z-index:130}
+#rmodal{z-index:125}
+body{color-scheme:dark}body.light{color-scheme:light}
+input[type=time],select{font:inherit;font-size:14px;background:var(--input);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:3px 6px}
+#scard{width:calc(100% - 20px);max-height:calc(100% - 20px);display:flex;flex-direction:column;background:var(--bg);border:3px solid var(--line);border-radius:18px;padding:12px 14px 10px}
+#scard h4{margin:0 0 6px;font-size:20px;display:flex;justify-content:space-between;align-items:center}
+#sbody{overflow-y:auto;flex:1;padding-right:4px}
+#sbody::-webkit-scrollbar{width:5px}
+#sbody::-webkit-scrollbar-thumb{background:var(--thumb);border-radius:3px}
+.sh{margin:12px 0 2px;font-size:12px;font-weight:bold;letter-spacing:2px;color:var(--line);border-bottom:1px solid rgba(128,128,128,.25);padding-bottom:3px}
+.srow{gap:10px;font-size:14px}
+.srow.sub{border-top:0;padding:4px 0 8px;font-size:13px}
+.srow.col{flex-direction:column;align-items:stretch;gap:6px}
+.sl{flex:1;min-width:0}
+.ss{font-size:11px;color:var(--sub);line-height:1.4}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--btn);border-radius:12px;padding:3px 9px;font-size:12px}
+.chip b{cursor:pointer;opacity:.6;font-size:11px}.chip b:hover{opacity:1;color:#f66}
+.addal{display:flex;align-items:center;gap:6px;font-size:12px;flex-wrap:wrap}
+.addal input,#oprange{font:inherit}
+.addal input{width:56px;padding:3px 5px;border-radius:6px;border:1px solid var(--line);background:var(--input);color:var(--text)}
+#oprange{flex:1;accent-color:var(--line)}
+.mini{font:inherit;font-size:12px;border:0;border-radius:10px;padding:5px 11px;cursor:pointer;background:var(--btn);color:var(--text)}
+.mini:hover{background:var(--line);color:#fff}
+.mini.pri{background:var(--line);color:#fff}
+.smsg{font-size:11px;color:var(--sub);padding:6px 2px 0;min-height:16px;word-break:break-all;user-select:text}
+/* 우클릭 메뉴 */
+#ctx{display:none;position:fixed;z-index:200;width:140px;background:var(--panel);border:2px solid var(--line);border-radius:12px;padding:5px}
+/* 튜토리얼 */
+#tut{display:none;position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:120;align-items:center;justify-content:center}
+#tcard{width:calc(100% - 20px);max-height:calc(100% - 20px);display:flex;flex-direction:column;background:var(--bg);border:3px solid var(--line);border-radius:18px;padding:14px 16px 12px}
+#tt{font-size:19px;font-weight:bold;margin-bottom:8px}
+#tb{overflow-y:auto;flex:1;font-size:14px;line-height:1.6;padding-right:4px}
+#tb::-webkit-scrollbar{width:5px}#tb::-webkit-scrollbar-thumb{background:var(--thumb);border-radius:3px}
+#tb p{margin:0 0 8px}
+#tb ul{margin:0 0 6px;padding-left:18px}#tb li{margin-bottom:5px}
+.demo{pointer-events:none;margin:6px 0 10px}
+.demo-plus{display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--line);color:#fff;align-items:center;justify-content:center;vertical-align:middle}
+.tdots{display:flex;gap:6px;justify-content:center;margin:8px 0}
+.tdots i{width:8px;height:8px;border-radius:50%;background:var(--off)}.tdots i.on{background:var(--line)}
+.tnav{display:flex;justify-content:space-between;align-items:center}
+.tnav span{display:flex;gap:6px}
+</style></head><body>
+<div id="app">
+  <div id="top">
+    <div id="grip" data-tauri-drag-region title="잡고 끌어서 창 이동"></div>
+    <div id="row1">
+      <div id="tabcol"><div id="tabs"></div><div id="bar"><div id="thumb"></div></div></div>
+      <div class="wall"></div>
+      <div id="fixed">
+        <div id="addwrap"><button id="addbtn">+</button><div id="menu"></div></div>
+        <button class="wbtn" id="bmin">—</button>
+        <button class="wbtn" id="bclose">✕</button>
+      </div>
+    </div>
+  </div>
+  <div id="content">
+    <div class="sec" id="dy"></div>
+    <div class="sec" id="wk"></div>
+    <div class="sec" id="cy"></div>
+  </div>
+  <div id="footer"></div>
+  <div id="cmodal"><div id="card"><div id="cmsg"></div><div class="cbtns"><button id="cno">취소</button><button id="cyes">삭제</button></div></div></div>
+  <div id="modal"><div id="scard">
+    <h4><span>⚙ 환경설정</span><span id="mclose">✕</span></h4>
+    <div id="sbody"></div>
+  </div></div>
+  <div id="tut"><div id="tcard">
+    <div id="tt"></div><div id="tb"></div><div class="tdots" id="td"></div>
+    <div class="tnav"><button class="mini" id="tskip">건너뛰기</button><span><button class="mini" id="tprev">이전</button><button class="mini pri" id="tnext">다음</button></span></div>
+  </div></div>
+  <div id="rmodal"><div id="rcard">
+    <h4 id="rtitle"></h4>
+    <div class="srow"><span>일간 초기화 시각</span><input type="time" id="rtime"></div>
+    <div class="srow"><span>주간 초기화 요일</span><select id="rday"><option value="0">일요일</option><option value="1">월요일</option><option value="2">화요일</option><option value="3">수요일</option><option value="4">목요일</option><option value="5">금요일</option><option value="6">토요일</option></select></div>
+    <div class="ss">한국시간 기준이에요. 주간은 같은 시각에 초기화돼요. 기본은 매일 05:00 · 월요일이에요. 주기 도전의 시간은 따로 입력해요.</div>
+    <div class="cbtns"><button id="rno">취소</button><button id="ryes">저장</button></div>
+  </div></div>
+  <div id="ctx"></div>
+  <input type="file" id="impfile" accept=".json" hidden>
+</div>
+<script>
+const inv=(c,a)=>window.__TAURI__.core.invoke(c,a);
+document.getElementById('bmin').onclick=()=>inv('win_min');
+document.getElementById('bclose').onclick=()=>inv('win_hide');
+
+// ---- 설정 ----
+const DEF={autoUpdate:true,dark:true,top:false,opOn:false,op:85,notify:false,alerts:[2],hkOn:false,hk:'Ctrl+Alt+H',launcher:false};
+let ST=Object.assign({},DEF,JSON.parse(localStorage.getItem('gcl-settings')||'{}'));
+if(!localStorage.getItem('gcl-settings')&&localStorage.getItem('gcl-dark')==='0')ST.dark=false;
+ST.alerts=(ST.alerts||[]).map(Number).filter(n=>n>0);
+const saveST=()=>localStorage.setItem('gcl-settings',JSON.stringify(ST));
+let autoOn=false,smsgText='',appVer='';
+function applyST(){
+  document.body.classList.toggle('light',!ST.dark);
+  document.getElementById('app').style.opacity=ST.opOn?ST.op/100:1;
+}
+function applyNative(){
+  inv('set_always_on_top',{enabled:ST.top}).catch(()=>{});
+  inv('set_shortcut',{shortcut:ST.hk,enabled:ST.hkOn}).catch(e=>{ST.hkOn=false;saveST();smsgText='단축키를 등록하지 못했어요: '+e;renderSettings()});
+}
+const modal=document.getElementById('modal'),sbody=document.getElementById('sbody');
+function openSettings(){modal.style.display='flex';renderSettings()}
+document.getElementById('mclose').onclick=()=>{modal.style.display='none'};
+modal.onclick=e=>{if(e.target===modal)modal.style.display='none'};
+const sw=(on,id)=>`<div class="pw ${on?'on':''}" data-sw="${id}"></div>`;
+const srow=(label,id,on,sub)=>`<div class="srow"><div class="sl"><div>${label}</div>${sub?`<div class="ss">${sub}</div>`:''}</div>${sw(on,id)}</div>`;
+const fmtH=h=>(Number.isInteger(+h)?+h:(+h).toFixed(1))+'시간';
+function renderSettings(){
+  const hidden=S.games.filter(g=>g.hidden);
+  sbody.innerHTML=
+   `<div class="sh">일반</div>`+
+   srow('컴퓨터 시작 시 자동 실행','auto',autoOn,'설치한 프로그램에서 적용돼요')+
+   srow('다크 모드','dark',ST.dark)+
+   `<div class="sh">창</div>`+
+   srow('항상 위에 표시','top',ST.top,'다른 창 위에 계속 떠 있어요')+
+   srow('창 투명도 조절','opOn',ST.opOn)+
+   (ST.opOn?`<div class="srow sub"><input type="range" id="oprange" min="40" max="100" value="${ST.op}"><span id="opval">${ST.op}%</span></div>`:'')+
+   `<div class="sh">알림</div>`+
+   srow('미완료 숙제 알림','notify',ST.notify,'각 게임의 초기화 시각 전에 못 한 숙제를 알려줘요')+
+   (ST.notify?`<div class="srow sub col"><div class="chips">${ST.alerts.map((h,i)=>`<span class="chip">${fmtH(h)} 전<b data-delal="${i}">✕</b></span>`).join('')||'<span class="ss">알림 시간이 없어요. 아래에서 추가하세요.</span>'}</div><div class="addal"><input id="alh" type="number" min="0.5" max="23.5" step="0.5" value="1"> 시간 전 <button class="mini" data-act="addal">추가</button><button class="mini" data-act="testal">알림 테스트</button></div></div>`:'')+
+   `<div class="sh">단축키</div>`+
+   srow('창 보이기/숨기기 단축키','hkOn',ST.hkOn,'게임 중에도 단축키로 불러내요')+
+   (ST.hkOn?`<div class="srow sub"><span class="ss">현재 단축키 (눌러서 변경)</span><button class="mini" data-act="hk">${esc(ST.hk)}</button></div>`:'')+
+   `<div class="sh">게임</div>`+
+   srow('게임 실행 바로가기','launcher',ST.launcher,'아래쪽에 ▶ 버튼이 생겨요. 게임마다 한 번 경로를 지정해요')+
+   (hidden.length?`<div class="srow sub col"><div class="ss">숨긴 게임</div><div class="chips">${hidden.map(g=>`<span class="chip">${esc(g.name)}<b data-show="${g.id}">보이기</b></span>`).join('')}</div></div>`:'')+
+   `<div class="sh">업데이트</div>`+
+   srow('시작할 때 새 버전 확인','autoUpdate',ST.autoUpdate,'현재 버전 v'+esc(appVer||'?'))+
+   `<div class="srow sub"><button class="mini" data-act="chkupd">지금 확인</button></div>`+
+   `<div class="sh">데이터와 도움말</div>`+
+   `<div class="srow sub"><button class="mini" data-act="export">백업 내보내기</button><button class="mini" data-act="import">백업 불러오기</button><button class="mini" data-act="help">사용법</button></div>`+
+   `<div class="smsg">${esc(smsgText)}</div>`;
+}
+function toggleSetting(id){
+  if(id==='auto'){autoOn=!autoOn;inv('set_autostart',{enabled:autoOn}).catch(()=>{});renderSettings();return}
+  ST[id]=!ST[id];
+  if(id==='notify'&&ST.notify)primeFired();
+  saveST();applyST();
+  if(id==='top'||id==='hkOn')applyNative();
+  renderSettings();renderFooter();
+}
+function captureHK(btn){
+  btn.textContent='키를 누르세요… (Esc 취소)';
+  const h=e=>{
+    e.preventDefault();e.stopPropagation();
+    if(['Control','Shift','Alt','Meta'].includes(e.key))return;
+    document.removeEventListener('keydown',h,true);
+    if(e.key==='Escape'){renderSettings();return}
+    const mods=[e.ctrlKey&&'Ctrl',e.altKey&&'Alt',e.shiftKey&&'Shift',e.metaKey&&'Super'].filter(Boolean);
+    let k=null,m;
+    if((m=/^Key([A-Z])$/.exec(e.code)))k=m[1];
+    else if((m=/^Digit([0-9])$/.exec(e.code)))k=m[1];
+    else if(/^F([1-9]|1[0-2])$/.test(e.code))k=e.code;
+    else if(e.code==='Space')k='Space';
+    if(!k||!mods.length){smsgText='Ctrl·Alt·Shift 중 하나와 글자·숫자·F키를 함께 눌러 주세요.';renderSettings();return}
+    ST.hk=[...mods,k].join('+');saveST();smsgText='';applyNative();renderSettings();
+  };
+  document.addEventListener('keydown',h,true);
+}
+sbody.onclick=e=>{
+  const t=e.target;
+  const s=t.closest('[data-sw]');
+  if(s){toggleSetting(s.dataset.sw);return}
+  if(t.dataset.delal!=null){ST.alerts.splice(+t.dataset.delal,1);saveST();renderSettings();return}
+  if(t.dataset.show){const g=S.games.find(x=>x.id===t.dataset.show);if(g){g.hidden=false;fixSel();save();renderSettings();render()}return}
+  const a=t.dataset.act;if(!a)return;
+  if(a==='addal'){
+    const v=+document.getElementById('alh').value;
+    if(v>=0.5&&v<=23.5&&!ST.alerts.includes(v)){ST.alerts.push(v);ST.alerts.sort((x,y)=>y-x);saveST();primeFired();renderSettings()}
+  }
+  if(a==='testal'){inv('notify',{title:'HCL 알림 테스트',body:testMsg()||'알림이 잘 와요! 지금은 남은 숙제가 없어요.'}).catch(()=>{})}
+  if(a==='hk')captureHK(t);
+  if(a==='chkupd')checkUpdate(true);
+  if(a==='export')exportData();
+  if(a==='import')document.getElementById('impfile').click();
+  if(a==='help'){modal.style.display='none';openTut()}
+};
+sbody.oninput=e=>{if(e.target.id==='oprange'){ST.op=+e.target.value;document.getElementById('opval').textContent=ST.op+'%';saveST();applyST()}};
+
+// ---- 자동 업데이트 ----
+inv('get_version').then(v=>{appVer=v}).catch(()=>{});
+function doUpdate(){
+  const m=document.getElementById('cmodal'),bt=document.querySelector('#cmodal .cbtns');
+  document.getElementById('cmsg').textContent='업데이트를 받는 중이에요… 잠시만 기다려 주세요. (끝나면 앱이 자동으로 다시 켜져요)';
+  bt.style.display='none';m.style.display='flex';
+  inv('install_update').catch(e=>{
+    bt.style.display='';m.style.display='none';
+    smsgText='업데이트에 실패했어요: '+e;if(modal.style.display==='flex')renderSettings();
+  });
+}
+async function checkUpdate(manual){
+  try{
+    const v=await inv('check_update');
+    if(v)askConfirm('새 버전 v'+v+'이 있어요! 지금 업데이트할까요? (앱이 잠깐 다시 시작돼요)',doUpdate,'업데이트');
+    else if(manual){smsgText='이미 최신 버전이에요.';renderSettings()}
+  }catch(e){
+    if(manual){smsgText='업데이트를 확인하지 못했어요: '+e;renderSettings()}
+  }
+}
+
+// ---- 백업 ----
+function exportData(){
+  const d=new Date(),p=n=>String(n).padStart(2,'0');
+  const name=`HCL-backup-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}.json`;
+  const json=JSON.stringify({app:'HCL',v:1,data:S,settings:ST},null,1);
+  inv('export_data',{json,name}).then(path=>{smsgText='다운로드 폴더에 저장했어요: '+path;renderSettings()}).catch(e=>{smsgText='저장에 실패했어요: '+e;renderSettings()});
+}
+document.getElementById('impfile').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const d=JSON.parse(rd.result);if(!Array.isArray(d?.data?.games))throw 0;
+      askConfirm('현재 데이터를 이 백업으로 바꿀까요? (되돌릴 수 없어요)',()=>{
+        localStorage.setItem(KEY,JSON.stringify(d.data));
+        if(d.settings)localStorage.setItem('gcl-settings',JSON.stringify(d.settings));
+        location.reload();
+      },'불러오기');
+    }catch(_){smsgText='올바른 백업 파일이 아니에요.';renderSettings()}
+  };
+  rd.readAsText(f);e.target.value='';
+};
+
+// ---- 확인 창 ----
+function askConfirm(msg,cb,yes='삭제'){
+  document.querySelector('#cmodal .cbtns').style.display='';
+  document.getElementById('cmsg').textContent=msg;document.getElementById('cyes').textContent=yes;
+  const m=document.getElementById('cmodal');m.style.display='flex';
+  document.getElementById('cyes').onclick=()=>{m.style.display='none';cb()};
+  document.getElementById('cno').onclick=()=>{m.style.display='none'};
+}
+
+// ---- 기본 제공 게임/숙제 ----
+const PRESETS={
+ '명조':{daily:['솔라리스 가이드','군락'],weekly:['군가의 중주 3회','에코 강화 흡수 15회','주간 여행']},
+ '이환':{daily:['활약도','인연 선물','데이트'],weekly:['도시 활력제','주간 보스 토벌 3회']},
+ '엔드필드':{daily:['작전 메뉴얼','거점 관리','친구 지원','제강호','크레딧 상점'],weekly:['주간 업무','관리권 구매 물품']},
+ '스타레일':{daily:['활약도','의뢰'],weekly:['주기 점수']},
+ '젠존제':{daily:['활약도','가게 운영','복권','커피'],weekly:['빙고','노토리우스','제로공동']}
+};
+// 주기 도전: 게임마다 '묶음' 목록. 묶음 안의 항목은 step일 간격으로 돌아가며 wd요일 05:00(KST)에 초기화
+// (wd: 1=월 2=화 3=수 4=목 5=금, null=요일 상관없이 05:00), 묶음끼리는 서로 별개
+const CYCLES={
+ '명조':[{wd:1,period:28,step:14,items:['역경의 탑','바닷속 폐허']},{wd:null,period:42,step:42,items:['종말 매트릭스']}],
+ '이환':[{wd:1,period:14,step:14,items:['핑크퍼스']},{wd:3,period:14,step:14,items:['궤도 너머']}],
+ '스타레일':[{wd:1,period:42,step:14,items:['허구 이야기','망각의 정원','종말의 환영']},{wd:null,period:42,step:42,items:['이상 중재']}],
+ '젠존제':[{wd:5,period:28,step:14,items:['시유 방어전','위험한 강습전']}]
+};
+const RENAME={'허구':'허구 이야기','종말':'종말의 환영'};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pk=g=>g.preset||g.name;   // 이름을 바꿔도 기본 게임(주기 규칙 등)을 알아보기 위한 키
+const ORDER=['명조','이환','엔드필드','스타레일','젠존제'];
+
+const KEY='gameChecklistV4';
+const uid=()=>Math.random().toString(36).slice(2);
+let S=JSON.parse(localStorage.getItem(KEY)||'null');
+if(!S){ // 이전 버전 데이터 이전: 숙제 스위치는 전부 켜짐으로
+  S=JSON.parse(localStorage.getItem('gameChecklistV3')||'null')||{games:[],sel:null,dKey:'',wKey:''};
+  S.games.forEach(g=>g.tasks.forEach(t=>t.enabled=true));
+}
+S.games.forEach(g=>{if(g.name==='젠존제로')g.name='젠존제'});   // 이미 추가해 둔 게임 이름 정정
+S.games.forEach(g=>{if(!g.preset&&(CYCLES[g.name]||PRESETS[g.name]))g.preset=g.name});
+S.games.forEach(g=>{const cs=CYCLES[pk(g)];if(!cs)return;
+  g.tasks.forEach(t=>{if(t.type==='cycle'&&RENAME[t.text])t.text=RENAME[t.text]});
+  cs.forEach((c,gr)=>c.items.forEach((x,k)=>{
+    let t=g.tasks.find(t=>t.type==='cycle'&&(t.pk===x||t.text===x));
+    if(!t){t={id:uid(),text:x,type:'cycle',enabled:true,done:false,target:null};g.tasks.push(t)}
+    if(c.wd!=null||!t.periodDays)t.periodDays=c.period;   // 버전 보스는 직접 고친 주기를 유지
+    t.grp=gr;t.gi=k;t.pk=x;
+  }));
+});
+function fixSel(){const v=S.games.filter(g=>!g.hidden);if(!v.find(g=>g.id===S.sel))S.sel=v[0]?.id||null}
+S.games.forEach(g=>{if(g.dKey===undefined)g.dKey=S.dKey;if(g.wKey===undefined)g.wKey=S.wKey});
+fixSel();
+const save=()=>localStorage.setItem(KEY,JSON.stringify(S));
+let addingGame=false, addingTask=null, menuOpen=false, toEnd=false;
+
+// ---- 초기화: 게임마다 설정 가능 (기본: 매일 05:00, 주간은 월요일 05:00 / 한국시간) ----
+// 체크만 풀리고 왼쪽 스위치는 건드리지 않음
+const rtOf=g=>{const [hh,mm]=(g.rt||'05:00').split(':').map(Number);return ((hh||0)*60+(mm||0))*6e4};
+const rwOf=g=>g.rw==null?1:g.rw;   // 0=일 1=월 ... 6=토
+function keys(g,now=Date.now()){
+  const t=now+9*3600e3-rtOf(g);
+  const d=new Date(t);
+  const dKey=d.toISOString().slice(0,10);
+  const diff=(d.getUTCDay()-rwOf(g)+7)%7;
+  const wKey=new Date(t-diff*864e5).toISOString().slice(0,10);
+  return {dKey,wKey};
+}
+function checkReset(){
+  let ch=false;
+  S.games.forEach(g=>{
+    const {dKey,wKey}=keys(g);
+    if(g.dKey!==dKey){g.tasks.forEach(t=>{if(t.type==='daily')t.done=false});g.dKey=dKey;ch=true}
+    if(g.wKey!==wKey){g.tasks.forEach(t=>{if(t.type==='weekly')t.done=false});g.wKey=wKey;ch=true}
+  });
+  const now=Date.now();
+  S.games.forEach(g=>g.tasks.forEach(t=>{
+    if(t.type==='cycle'&&t.target&&now>=t.target){
+      while(now>=t.target)t.target+=t.periodDays*864e5;
+      t.done=false;ch=true;
+    }
+  }));
+  if(ch){save();render()}
+}
+// 숙제가 있는 종류에서, 켜둔 숙제를 전부 했거나 전부 꺼둔 경우(할 게 없음) 원이 채워짐
+function full(g,type){const all=g.tasks.filter(t=>t.type===type);return all.length>0&&all.filter(t=>t.enabled).every(t=>t.done)}
+
+function addGame(name,tasks,preset){
+  const g={id:uid(),name,tasks:tasks||[]};if(preset)g.preset=preset;
+  const k=keys(g);g.dKey=k.dKey;g.wKey=k.wKey;
+  S.games.push(g);S.sel=g.id;toEnd=true;save();render();
+  return g;
+}
+function addPreset(n){
+  const p=PRESETS[n],tasks=[];
+  p.daily.forEach(x=>tasks.push({id:uid(),text:x,type:'daily',enabled:true,done:false}));
+  p.weekly.forEach(x=>tasks.push({id:uid(),text:x,type:'weekly',enabled:true,done:false}));
+  (CYCLES[n]||[]).forEach((c,gr)=>c.items.forEach((x,k)=>tasks.push({id:uid(),text:x,type:'cycle',enabled:true,done:false,periodDays:c.period,grp:gr,gi:k,pk:x,target:null})));
+  addGame(n,tasks,n);
+}
+
+const menu=document.getElementById('menu');
+function renderMenu(){
+  menu.style.display=menuOpen?'block':'none';
+  if(!menuOpen)return;
+  menu.innerHTML='';
+  ORDER.forEach(n=>{
+    const has=S.games.some(g=>pk(g)===n);
+    const d=document.createElement('div');d.className='mi'+(has?' dis':'');
+    d.textContent=n+(has?' (추가됨)':'');
+    if(!has)d.onclick=()=>{menuOpen=false;addPreset(n)};
+    menu.appendChild(d);
+  });
+  const c=document.createElement('div');c.className='mi custom';c.textContent='직접 게임 추가';
+  c.onclick=()=>{menuOpen=false;addingGame=true;render()};
+  menu.appendChild(c);
+}
+document.getElementById('addbtn').onclick=e=>{e.stopPropagation();menuOpen=!menuOpen;renderMenu()};
+document.addEventListener('click',()=>{ctx.style.display='none';if(menuOpen){menuOpen=false;renderMenu()}});
+
+const tabsEl=document.getElementById('tabs');
+tabsEl.addEventListener('wheel',e=>{tabsEl.scrollLeft+=e.deltaY});
+const bar=document.getElementById('bar'),thumb=document.getElementById('thumb');
+function updFit(){
+  const sw=tabsEl.scrollWidth,cw=tabsEl.clientWidth,bw=bar.clientWidth;
+  const w=sw>cw?Math.max(30,bw*cw/sw):bw;
+  thumb.style.width=w+'px';
+  thumb.style.left=(sw>cw?(bw-w)*tabsEl.scrollLeft/(sw-cw):0)+'px';
+}
+tabsEl.addEventListener('scroll',updFit);
+window.addEventListener('resize',updFit);
+thumb.onmousedown=e=>{
+  e.preventDefault();const sx=e.clientX,sl=tabsEl.scrollLeft;
+  const mv=ev=>{const sw=tabsEl.scrollWidth,cw=tabsEl.clientWidth,bw=bar.clientWidth,w=thumb.offsetWidth;
+    if(bw>w)tabsEl.scrollLeft=sl+(ev.clientX-sx)*(sw-cw)/(bw-w)};
+  const up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up)};
+  document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
+};
+bar.onmousedown=e=>{if(e.target===bar){const r=bar.getBoundingClientRect();
+  tabsEl.scrollLeft=(e.clientX-r.left)/r.width*(tabsEl.scrollWidth-tabsEl.clientWidth)}};
+
+// ---- 게임 탭 꾹 눌러서 순서 바꾸기 ----
+let suppressClick=false,renamingId=null;
+function startTabPress(e,el){
+  const sx=e.clientX,sy=e.clientY;let dragging=false,dir=0,iv=null;
+  const timer=setTimeout(()=>{
+    dragging=true;el.classList.add('lift');document.body.classList.add('dragging');
+    iv=setInterval(()=>{if(dir)tabsEl.scrollLeft+=dir*8},16);
+  },350);
+  const stop=()=>{clearTimeout(timer);if(iv)clearInterval(iv);
+    document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up)};
+  const mv=ev=>{
+    if(!dragging){if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6)stop();return}
+    for(const t of tabsEl.querySelectorAll('.tab')){
+      if(t===el)continue;
+      const b=t.getBoundingClientRect();
+      if(ev.clientX>b.left&&ev.clientX<b.right){
+        if(ev.clientX<b.left+b.width/2)t.before(el);else t.after(el);
+        break;
+      }
+    }
+    const tr=tabsEl.getBoundingClientRect();
+    dir=ev.clientX<tr.left+30?-1:ev.clientX>tr.right-30?1:0;
+  };
+  const up=()=>{
+    const was=dragging;stop();
+    if(!was)return;
+    document.body.classList.remove('dragging');
+    const ids=[...tabsEl.querySelectorAll('.tab')].map(t=>t.dataset.id);
+    const ordered=ids.map(id=>S.games.find(g=>g.id===id)).filter(Boolean);
+    let k=0;S.games=S.games.map(g=>g.hidden?g:ordered[k++]);
+    suppressClick=true;setTimeout(()=>suppressClick=false,0);
+    save();render();
+  };
+  document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
+}
+function delGame(g){askConfirm(g.name+' 삭제할까요?',()=>{S.games=S.games.filter(x=>x!==g);fixSel();save();render()})}
+const ctx=document.getElementById('ctx');
+function showCtx(e,g){
+  e.preventDefault();
+  ctx.innerHTML='<div class="mi" data-c="ren">이름 바꾸기</div><div class="mi" data-c="rst">초기화 시간</div><div class="mi" data-c="hide">숨기기</div><div class="mi" data-c="del">삭제</div>';
+  ctx.style.display='block';
+  ctx.style.left=Math.max(4,Math.min(e.clientX,innerWidth-150))+'px';
+  ctx.style.top=Math.max(4,Math.min(e.clientY+6,innerHeight-170))+'px';
+  ctx.onclick=ev=>{
+    const c=ev.target.dataset.c;ctx.style.display='none';
+    if(c==='ren'){renamingId=g.id;render()}
+    if(c==='rst')openReset(g);
+    if(c==='hide'){g.hidden=true;fixSel();save();render()}
+    if(c==='del')delGame(g);
+  };
+}
+function renderTabs(){
+  const sl=tabsEl.scrollLeft;tabsEl.innerHTML='';
+  S.games.filter(g=>!g.hidden).forEach(g=>{
+    if(renamingId===g.id){
+      const i=document.createElement('input');i.className='rn';i.value=g.name;let done=false;
+      const commit=ok=>{if(done)return;done=true;if(ok&&i.value.trim())g.name=i.value.trim();renamingId=null;save();render()};
+      i.onkeydown=e=>{if(e.key==='Enter')commit(true);if(e.key==='Escape')commit(false)};
+      i.onblur=()=>commit(true);
+      tabsEl.appendChild(i);setTimeout(()=>{i.focus();i.select()},0);
+      return;
+    }
+    const el=document.createElement('div');el.className='tab'+(g.id===S.sel?' sel':'');
+    el.innerHTML=`<span>${esc(g.name)}</span><span class="dot g ${full(g,'daily')?'full':''}"></span><span class="dot b ${full(g,'weekly')?'full':''}"></span><span class="x">✕</span>`;
+    el.dataset.id=g.id;
+    el.onclick=()=>{if(suppressClick)return;S.sel=g.id;save();render()};
+    el.ondblclick=e=>{if(e.target.classList.contains('x'))return;renamingId=g.id;render()};
+    el.onmousedown=e=>{if(e.button===0&&!e.target.classList.contains('x'))startTabPress(e,el)};
+    el.oncontextmenu=e=>showCtx(e,g);
+    el.querySelector('.x').onclick=e=>{e.stopPropagation();delGame(g)};
+    tabsEl.appendChild(el);
+  });
+  if(addingGame){
+    const i=document.createElement('input');i.id='addgame';i.placeholder='게임 이름 + Enter';
+    i.onkeydown=e=>{
+      if(e.key==='Enter'&&i.value.trim()){addingGame=false;const ng=addGame(i.value.trim());setTimeout(()=>openReset(ng),0)}
+      if(e.key==='Escape'){addingGame=false;render()}};
+    i.onblur=()=>{addingGame=false;setTimeout(render,100)};
+    tabsEl.appendChild(i);setTimeout(()=>{i.focus();tabsEl.scrollLeft=tabsEl.scrollWidth},0);
+  }
+  tabsEl.scrollLeft=toEnd?tabsEl.scrollWidth:sl;toEnd=false;updFit();
+}
+// ---- 숙제 순서 바꾸기 (왼쪽 ⋮⋮ 잡고 끌기) ----
+function startDrag(e,row,sec,g,type){
+  e.preventDefault();
+  row.classList.add('dragging');document.body.classList.add('dragging');
+  const rows=()=>[...sec.querySelectorAll('.row.'+type)];
+  const move=ev=>{
+    for(const r of rows()){
+      if(r===row)continue;
+      const b=r.getBoundingClientRect();
+      if(ev.clientY>b.top&&ev.clientY<b.bottom){
+        if(ev.clientY<b.top+b.height/2)r.before(row);else r.after(row);
+        break;
+      }
+    }
+  };
+  const up=()=>{
+    document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up);
+    row.classList.remove('dragging');document.body.classList.remove('dragging');
+    const mine=g.tasks.filter(t=>t.type===type);
+    const ordered=rows().map(r=>mine.find(t=>t.id===r.dataset.id)).filter(Boolean);
+    if(ordered.length===mine.length){let k=0;g.tasks=g.tasks.map(t=>t.type===type?ordered[k++]:t)}
+    save();render();
+  };
+  document.addEventListener('mousemove',move);document.addEventListener('mouseup',up);
+}
+// ---- 숙제 이름 더블클릭으로 수정 ----
+function editName(span,t){
+  const i=document.createElement('input');i.className='tn';i.value=t.text;let done=false;
+  const commit=ok=>{if(done)return;done=true;if(ok&&i.value.trim())t.text=i.value.trim();save();render()};
+  i.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter')commit(true);if(e.key==='Escape')commit(false)};
+  i.onblur=()=>commit(true);
+  span.replaceWith(i);i.focus();i.select();
+}
+function setupAll(ab,g,type){
+  const ts=g.tasks.filter(t=>t.type===type&&t.enabled);
+  if(!ts.length){ab.style.display='none';return}
+  const all=ts.every(t=>t.done);
+  ab.textContent=all?'전체 해제':'전체 체크';
+  ab.onclick=()=>{ts.forEach(t=>t.done=!all);save();render()};
+}
+function renderSec(el,g,type,title){
+  el.innerHTML=`<h3><button class="all"></button><span>${title}</span><button class="plus">+</button></h3>`;
+  setupAll(el.querySelector('.all'),g,type);
+  el.querySelector('.plus').onclick=()=>{addingTask=type;render()};
+  if(addingTask===type){
+    const w=document.createElement('div');w.className='addrow';
+    w.innerHTML='<input placeholder="숙제 입력 후 Enter">';
+    const i=w.querySelector('input');
+    i.onkeydown=e=>{
+      if(e.key==='Enter'&&i.value.trim()){g.tasks.push({id:uid(),text:i.value.trim(),type,enabled:true,done:false});addingTask=null;save();render();return}
+      if(e.key==='Escape'){addingTask=null;render()}};
+    i.onblur=()=>{addingTask=null;setTimeout(render,100)};
+    el.appendChild(w);setTimeout(()=>i.focus(),0);
+  }
+  g.tasks.filter(t=>t.type===type).forEach(t=>{
+    const r=document.createElement('div');
+    r.className=`row ${type}${t.done?' done':''}${t.enabled?'':' off'}`;
+    r.dataset.id=t.id;
+    r.innerHTML=`<span class="grip2" title="잡고 끌어서 순서 변경">⋮⋮</span><div class="pw ${t.enabled?'on':''}"></div>
+      <span class="name">${esc(t.text)}</span><span class="del">✕</span>
+      <input type="checkbox" ${t.done?'checked':''}>`;
+    r.querySelector('.grip2').onmousedown=e=>startDrag(e,r,el,g,type);
+    r.querySelector('.name').ondblclick=e=>editName(e.currentTarget,t);
+    r.querySelector('.pw').onclick=()=>{t.enabled=!t.enabled;save();render()};   // 왼쪽 스위치: 직접 누를 때만 변경
+    r.querySelector('input').onchange=e=>{t.done=e.target.checked;save();render()}; // 오른쪽 체크: 글자만 흐려짐
+    r.querySelector('.del').onclick=()=>{g.tasks=g.tasks.filter(x=>x!==t);save();render()};
+    el.appendChild(r);
+  });
+}
+function remText(t){
+  if(!t.target)return '시간 설정';
+  const ms=t.target-Date.now();if(ms<=0)return '곧 초기화';
+  const d=Math.floor(ms/864e5),hr=Math.floor(ms%864e5/36e5);   // 분은 버림
+  if(d>0)return d+'일 '+hr+'시간';
+  return hr>0?hr+'시간':'1시간 미만';
+}
+function tickRem(){
+  const all=S.games.flatMap(g=>g.tasks);
+  document.querySelectorAll('.rem').forEach(el=>{const t=all.find(x=>x.id===el.dataset.id);if(t)el.textContent=remText(t)});
+}
+let editingCycle=null;
+// 가장 가까운 wd요일 05:00(KST)로 맞춤
+function snapWeekday5(ts,wd){
+  if(wd==null)return Math.round((ts+4*3600e3)/864e5)*864e5-4*3600e3;   // 요일 상관없이 가장 가까운 05:00
+  const off=(wd-4+7)%7;                       // 1970-01-01은 목요일
+  const t=ts+4*3600e3;                        // KST 05:00 -> UTC 00:00 기준으로 이동
+  const w=Math.round((t/864e5-off)/7);
+  return (w*7+off)*864e5-4*3600e3;
+}
+// 한 항목의 초기화 시각을 정하면 같은 게임의 나머지 항목도 14일 간격으로 계산
+function setCycle(g,t,raw,link=true){
+  const c=CYCLES[pk(g)]?.[t.grp];
+  const T=c?snapWeekday5(raw,c.wd):raw;t.target=T;
+  if(!c||t.gi==null||!link)return;
+  const n=c.items.length,now=Date.now();
+  g.tasks.filter(x=>x.type==='cycle'&&x.grp===t.grp&&x.gi!=null&&x!==t).forEach(x=>{
+    const k=(((x.gi-t.gi)%n)+n)%n;
+    let v=T+k*c.step*864e5;
+    while(v-c.period*864e5>now)v-=c.period*864e5;
+    x.target=v;
+  });
+}
+function renderCycle(el,g){
+  el.innerHTML='<h3><button class="all"></button><span>주기</span><button class="plus">+</button></h3>';
+  setupAll(el.querySelector('.all'),g,'cycle');
+  el.querySelector('.plus').onclick=()=>{addingTask=addingTask==='cycle'?null:'cycle';render()};
+  if(addingTask==='cycle'){
+    const f=document.createElement('div');f.className='cform';
+    f.innerHTML='<input class="ci n" placeholder="이름"><input class="ci" type="number" min="1" value="4"><span>주</span><button class="ok">추가</button>';
+    const [n,p]=f.querySelectorAll('input');
+    const go=()=>{if(!n.value.trim())return;
+      g.tasks.push({id:uid(),text:n.value.trim(),type:'cycle',enabled:true,done:false,periodDays:Math.max(1,+p.value||4)*7,target:null});
+      addingTask=null;save();render()};
+    f.querySelector('.ok').onclick=go;
+    f.onkeydown=e=>{if(e.key==='Enter')go();if(e.key==='Escape'){addingTask=null;render()}};
+    el.appendChild(f);setTimeout(()=>n.focus(),0);
+  }
+  g.tasks.filter(t=>t.type==='cycle').sort((a,b)=>(a.target||0)-(b.target||0)).forEach(t=>{
+    const r=document.createElement('div');
+    if(editingCycle===t.id){
+      r.className='row cycle';
+      const cdef=CYCLES[pk(g)]?.[t.grp];
+      const linkable=cdef&&cdef.items.length>1;
+      const versioned=cdef&&cdef.wd==null;   // 버전 보스: 주기(일) 수정 가능
+      r.innerHTML=`<span class="name">${esc(t.text)}</span><input class="ci" type="number" min="0" placeholder="0"><span>일</span><input class="ci" type="number" min="0" max="23" placeholder="0"><span>시간</span><button class="ok">확인</button>${linkable?'<label class="lk lkl"><input type="checkbox" checked> 나머지 항목도 같이 계산</label>':''}${versioned?`<label class="lk pdl">이번 버전 주기 <input class="ci pd" type="number" min="1" value="${t.periodDays}"> 일 (35일 버전이면 35)</label>`:''}`;
+      r.style.flexWrap='wrap';
+      const [d,hh]=r.querySelectorAll('input.ci');
+      const lk=r.querySelector('.lkl input'),pd=r.querySelector('.pd');
+      const go=()=>{
+        if(pd&&+pd.value>0)t.periodDays=+pd.value;
+        setCycle(g,t,Date.now()+(+d.value||0)*864e5+(+hh.value||0)*36e5,lk?lk.checked:true);
+        editingCycle=null;save();render()};
+      r.querySelector('.ok').onclick=go;
+      r.onkeydown=e=>{if(e.key==='Enter')go();if(e.key==='Escape'){editingCycle=null;render()}};
+      el.appendChild(r);setTimeout(()=>d.focus(),0);return;
+    }
+    r.className=`row cycle${t.done?' done':''}${t.enabled?'':' off'}`;
+    r.innerHTML=`<span class="grip2 ph">⋮⋮</span><div class="pw ${t.enabled?'on':''}"></div>
+      <span class="name">${esc(t.text)}</span><span class="rem" data-id="${t.id}" title="게임에 표시된 남은 시간으로 다시 설정">${remText(t)}</span><span class="del">✕</span>
+      <input type="checkbox" ${t.done?'checked':''}>`;
+    r.querySelector('.pw').onclick=()=>{t.enabled=!t.enabled;save();render()};
+    r.querySelector('input').onchange=e=>{t.done=e.target.checked;save();render()};
+    r.querySelector('.rem').onclick=()=>{editingCycle=t.id;render()};
+    r.querySelector('.name').ondblclick=e=>editName(e.currentTarget,t);
+    r.querySelector('.del').onclick=()=>{g.tasks=g.tasks.filter(x=>x!==t);save();render()};
+    el.appendChild(r);
+  });
+}
+// ---- 아래 줄: 게임 실행 / 도움말 / 설정 ----
+async function pickExe(g){const p=await inv('pick_exe').catch(()=>null);if(p){g.exe=p;save();renderFooter()}}
+function launchGame(g){inv('launch',{path:g.exe}).catch(()=>askConfirm('게임을 실행하지 못했어요. 경로를 다시 지정할까요?',()=>pickExe(g),'지정'))}
+function renderFooter(){
+  const g=S.games.find(x=>x.id===S.sel&&!x.hidden);
+  const f=document.getElementById('footer');
+  f.innerHTML=`<span>Created by 눈냥이 ©</span><span class="fr">${ST.launcher&&g?`<button class="fb" id="flaunch" title="${g.exe?esc(g.exe)+' (우클릭: 경로 변경)':'게임 실행 파일 경로를 지정해요'}">${g.exe?'▶ 실행':'▶ 경로 지정'}</button>`:''}<button class="fb" id="fhelp" title="사용법">?</button><button class="fb" id="fset">⚙ 설정</button></span>`;
+  document.getElementById('fset').onclick=openSettings;
+  document.getElementById('fhelp').onclick=()=>openTut();
+  const fl=document.getElementById('flaunch');
+  if(fl){fl.onclick=()=>g.exe?launchGame(g):pickExe(g);fl.oncontextmenu=e=>{e.preventDefault();pickExe(g)}}
+}
+function render(){
+  renderTabs();renderMenu();renderFooter();
+  const g=S.games.find(x=>x.id===S.sel&&!x.hidden);
+  const dy=document.getElementById('dy'),wk=document.getElementById('wk'),cy=document.getElementById('cy');
+  if(!g){
+    dy.innerHTML=S.games.some(x=>x.hidden)
+      ?'<div class="empty">모든 게임이 숨겨져 있어요<br>⚙ 설정에서 다시 보이게 할 수 있어요</div>'
+      :'<div class="empty">오른쪽 위의 <b>+</b> 버튼으로<br>게임을 추가하세요</div>';
+    wk.style.display='none';cy.style.display='none';return}
+  wk.style.display='';cy.style.display='';
+  renderSec(dy,g,'daily','일간');
+  renderSec(wk,g,'weekly','주간');
+  dy.querySelector('h3').title='매일 '+(g.rt||'05:00')+' 초기화';
+  wk.querySelector('h3').title='매주 '+DAYS[rwOf(g)]+'요일 '+(g.rt||'05:00')+' 초기화';
+  renderCycle(cy,g);
+}
+
+// ---- 미완료 알림 (게임마다 초기화 시각이 달라도 각자 계산) ----
+const nextReset=(now,g)=>{const off=rtOf(g);return (Math.floor((now+9*36e5-off)/864e5)+1)*864e5-9*36e5+off};
+function unfinishedLine(g,R){
+  const wk=new Date(R+9*36e5).getUTCDay()===rwOf(g);   // 그 초기화가 주간 초기화 요일이면 주간도 함께 초기화
+  const ts=g.tasks.filter(t=>t.enabled&&!t.done);
+  const d=ts.filter(t=>t.type==='daily').length;
+  const w=wk?ts.filter(t=>t.type==='weekly').length:0;
+  const c=ts.filter(t=>t.type==='cycle'&&t.target&&Math.abs(t.target-R)<6e4).map(t=>t.text);
+  const parts=[];if(d)parts.push('일간 '+d);if(w)parts.push('주간 '+w);if(c.length)parts.push('주기 '+c.join(', '));
+  return parts.join(' · ');
+}
+const getFired=()=>JSON.parse(localStorage.getItem('gcl-fired')||'{}');
+// 설정을 켜거나 시간을 추가한 순간, 이미 지나간 알림 시각은 보내지 않도록 표시
+function primeFired(){
+  const now=Date.now(),f=getFired();
+  S.games.forEach(g=>{const R=nextReset(now,g);ST.alerts.forEach(h=>{if(now>=R-h*36e5)f[g.id+'-'+R+'-'+h]=1})});
+  localStorage.setItem('gcl-fired',JSON.stringify(f));
+}
+function testMsg(){
+  const now=Date.now();
+  return S.games.filter(g=>!g.hidden).map(g=>{const l=unfinishedLine(g,nextReset(now,g));return l?g.name+': '+l:''}).filter(Boolean).join('\n');
+}
+function checkAlerts(){
+  if(!ST.notify)return;
+  const now=Date.now(),f=getFired();let ch=false;const lines=[];
+  for(const k in f){if(+k.split('-')[1]<now-3*864e5){delete f[k];ch=true}}
+  S.games.filter(g=>!g.hidden).forEach(g=>{
+    const R=nextReset(now,g),due=[];
+    ST.alerts.forEach(h=>{
+      const key=g.id+'-'+R+'-'+h;
+      if(f[key]||now<R-h*36e5)return;
+      f[key]=1;ch=true;due.push(h);
+    });
+    if(!due.length)return;
+    const l=unfinishedLine(g,R);
+    if(l)lines.push(g.name+' ('+fmtH(Math.min(...due))+' 전): '+l);
+  });
+  if(lines.length)inv('notify',{title:'HCL · 미완료 숙제 알림',body:lines.join('\n')}).catch(()=>{});
+  if(ch)localStorage.setItem('gcl-fired',JSON.stringify(f));
+}
+
+// ---- 게임별 초기화 시간 설정 ----
+let rGame=null;
+const DAYS=['일','월','화','수','목','금','토'];
+function openReset(g){
+  if(!g)return;rGame=g;
+  document.getElementById('rtitle').textContent=g.name+' · 초기화 시간';
+  document.getElementById('rtime').value=g.rt||'05:00';
+  document.getElementById('rday').value=String(rwOf(g));
+  document.getElementById('rmodal').style.display='flex';
+}
+document.getElementById('rno').onclick=()=>{document.getElementById('rmodal').style.display='none'};
+document.getElementById('ryes').onclick=()=>{
+  const g=rGame;if(!g)return;
+  g.rt=document.getElementById('rtime').value||'05:00';
+  g.rw=+document.getElementById('rday').value;
+  const k=keys(g);g.dKey=k.dKey;g.wKey=k.wKey;   // 바꾼 순간 체크가 풀리지 않도록 기준만 갱신
+  save();primeFired();
+  document.getElementById('rmodal').style.display='none';render();
+};
+
+// ---- 처음 사용 안내 ----
+const DR='<div class="row demo daily done"><span class="grip2">⋮⋮</span><div class="pw on"></div><span class="name">솔라리스 가이드</span><input type="checkbox" checked disabled></div>';
+const TUT=[
+ {t:'HCL에 오신 걸 환영해요!',b:'<p>여러 게임의 <b>일일·주간 숙제</b>를 한곳에서 체크하는 프로그램이에요.</p><p>오른쪽 위의 <span class="demo-plus">+</span> 버튼을 눌러 게임을 추가해 보세요.</p><p class="ss">명조·이환·엔드필드·스타레일·젠존제는 숙제가 미리 들어 있어요. 다른 게임은 <b>직접 게임 추가</b>로 이름을 정하고 숙제를 직접 넣을 수 있어요.</p>'},
+ {t:'숙제 체크하기',b:DR+'<ul><li><b>왼쪽 스위치</b>: 이 숙제를 쓸지 정해요. 안 하는 숙제는 꺼 두면 완료 계산에서 빠져요. 내가 누르기 전에는 절대 바뀌지 않아요.</li><li><b>오른쪽 체크</b>: 완료하면 글자가 흐려져요. (일간 초록 · 주간 파랑 · 주기 보라)</li><li><b>⋮⋮</b>를 잡고 끌면 순서가 바뀌어요.</li><li>이름을 <b>더블클릭</b>하면 수정, 줄에 마우스를 올리면 ✕로 삭제할 수 있어요.</li><li>제목 옆 <b>전체 체크/해제</b>와 <b>+</b>(숙제 추가)도 있어요.</li></ul>'},
+ {t:'탭의 두 개의 원',b:'<p><span class="tab"><span>명조</span><span class="dot g full"></span><span class="dot b"></span></span></p><ul><li><span class="dot g full"></span> <b>초록 원</b>은 일간, <span class="dot b full"></span> <b>파란 원</b>은 주간이에요.</li><li>켜 둔 숙제를 모두 하면 채워져요. 켜 둔 숙제가 하나도 없어도 채워져요.</li><li>초기화는 한국시간으로 <b>일간 매일 오전 5시</b>, <b>주간 매주 월요일 오전 5시</b>가 기본이에요. 체크만 풀리고 왼쪽 스위치는 그대로예요.</li><li>게임마다 초기화 시간이 다르면 탭을 <b>오른쪽 클릭 → 초기화 시간</b>에서 바꿀 수 있어요. 직접 추가한 게임은 만들 때 바로 물어봐요.</li></ul>'},
+ {t:'주기 도전',b:'<ul><li>28일·42일처럼 길게 도는 콘텐츠예요. 남은 시간이 <b>짧은 순서</b>로 위에 정렬돼요.</li><li>처음 한 번 <b>시간 설정</b>을 누르고, 게임에 표시된 "N일 N시간 후 초기화"를 그대로 입력하세요. 가장 가까운 초기화 시각으로 맞춰지고, 이후엔 자동으로 반복돼요.</li><li>번갈아 도는 항목(예: 역경의 탑 ↔ 바닷속 폐허)은 <b>하나만 입력</b>해도 나머지가 자동 계산돼요.</li><li>5주 같은 예외가 생기면 남은 시간을 눌러 다시 입력하세요. <b>"나머지 항목도 같이 계산"</b>을 끄면 그 항목만 바뀌어요. 버전 보스는 주기(일)도 바꿀 수 있어요.</li></ul>'},
+ {t:'게임 탭 다루기',b:'<ul><li>탭을 <b>꾹 누르고 끌기</b>: 순서 변경</li><li>탭 <b>더블클릭</b>: 이름 수정</li><li>탭 <b>오른쪽 클릭</b>: 이름 바꾸기 · 초기화 시간 · 숨기기 · 삭제</li><li>탭 아래 <b>색깔 바</b>를 끌면 옆으로 넘어가요.</li><li>맨 위 <b>가는 줄</b>을 잡고 끌면 창을 옮겨요.</li><li>숨긴 게임은 <b>⚙ 설정</b>에서 다시 보이게 할 수 있어요.</li></ul>'},
+ {t:'설정에서 켤 수 있는 기능',b:'<p><b>⚙ 설정</b>에서 켜고 끌 수 있어요. (처음엔 자동 실행과 다크 모드만 켜져 있어요)</p><ul><li>미완료 숙제 알림 (몇 시간 전인지 여러 개 설정)</li><li>항상 위에 표시 · 창 투명도</li><li>단축키로 창 보이기/숨기기</li><li>게임 실행 바로가기</li><li>백업 내보내기/불러오기</li></ul><p class="ss">창의 ✕를 눌러도 꺼지지 않고 오른쪽 아래 트레이로 숨어요. 완전히 끄려면 트레이 아이콘 우클릭 → 종료. 이 설명은 아래쪽 <b>?</b> 버튼으로 언제든 다시 볼 수 있어요.</p>'}
+];
+let tutI=0;
+function openTut(i=0){tutI=i;document.getElementById('tut').style.display='flex';drawTut()}
+function closeTut(){document.getElementById('tut').style.display='none';localStorage.setItem('gcl-tut','1')}
+function drawTut(){
+  const p=TUT[tutI];
+  document.getElementById('tt').textContent=p.t;
+  const tb=document.getElementById('tb');tb.innerHTML=p.b;tb.scrollTop=0;
+  document.getElementById('td').innerHTML=TUT.map((_,i)=>`<i class="${i===tutI?'on':''}"></i>`).join('');
+  document.getElementById('tprev').style.visibility=tutI?'visible':'hidden';
+  document.getElementById('tnext').textContent=tutI===TUT.length-1?'시작하기':'다음';
+  document.getElementById('tskip').style.visibility=tutI===TUT.length-1?'hidden':'visible';
+}
+document.getElementById('tprev').onclick=()=>{if(tutI>0){tutI--;drawTut()}};
+document.getElementById('tnext').onclick=()=>{if(tutI<TUT.length-1){tutI++;drawTut()}else closeTut()};
+document.getElementById('tskip').onclick=closeTut;
+
+// ---- 시작 ----
+applyST();
+checkReset();render();
+function refreshAuto(){inv('get_autostart').then(v=>{autoOn=!!v}).catch(()=>{})}
+if(!localStorage.getItem('gcl-init')){   // 설치 후 처음 실행: 컴퓨터 시작 시 자동 실행을 켬
+  localStorage.setItem('gcl-init','1');
+  inv('init_autostart').catch(()=>{}).then(refreshAuto);
+}else refreshAuto();
+applyNative();
+checkAlerts();
+setInterval(checkReset,30000);setInterval(tickRem,30000);setInterval(checkAlerts,30000);
+if(!localStorage.getItem('gcl-tut'))openTut();
+else if(ST.autoUpdate)setTimeout(()=>checkUpdate(false),4000);   // 시작 4초 뒤 조용히 확인
+</script></body></html>

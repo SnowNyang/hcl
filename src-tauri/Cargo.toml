@@ -1,0 +1,30 @@
+[package]
+name = "game-checklist"
+version = "1.0.0"
+description = "게임 일일/주간 숙제 체크"
+authors = ["눈냥이"]
+edition = "2021"
+
+[lib]
+name = "game_checklist_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-autostart = "2"
+tauri-plugin-single-instance = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-window-state = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-updater = "2"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

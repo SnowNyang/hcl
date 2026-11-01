@@ -1,0 +1,65 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "HCL",
+  "version": "1.0.0",
+  "identifier": "com.nunnyang.gamechecklist",
+  "build": {
+    "frontendDist": "../src"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "HCL",
+        "width": 360,
+        "height": 560,
+        "minWidth": 300,
+        "minHeight": 320,
+        "decorations": false,
+        "transparent": true,
+        "shadow": false,
+        "maximizable": false,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": [
+          "Korean",
+          "English"
+        ],
+        "displayLanguageSelector": false,
+        "installerIcon": "icons/icon.ico"
+      }
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY4NkJERjY5QzA1RUFCOEYKUldTUHExN0FhZDlyK1A0M1dDa0N1Vis5MUdFY2pFb2JLYjJseFhSOU9od2Z5TVQvNmpwaFFNNzkK",
+      "endpoints": [
+        "https://github.com/SnowNyang/hcl/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}
