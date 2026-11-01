@@ -339,7 +339,7 @@ const PRESETS={
  '명조':{daily:['솔라리스 가이드','군락'],weekly:['군가의 중주 3회','에코 강화 흡수 15회','주간 여행']},
  '이환':{daily:['활약도','인연 선물','데이트'],weekly:['도시 활력제','주간 보스 토벌 3회']},
  '엔드필드':{daily:['작전 메뉴얼','거점 관리','친구 지원','제강호','크레딧 상점'],weekly:['주간 업무','관리권 구매 물품']},
- '스타레일':{daily:['활약도','의뢰'],weekly:['주기 점수']},
+ '스타레일':{daily:['활약도','의뢰'],weekly:['주기 점수','전쟁의 여운']},
  '젠존제':{daily:['활약도','가게 운영','복권','커피'],weekly:['빙고','노토리우스','제로공동']}
 };
 // 주기 도전: 게임마다 '묶음' 목록. 묶음 안의 항목은 step일 간격으로 돌아가며 wd요일 05:00(KST)에 초기화
@@ -364,6 +364,15 @@ if(!S){ // 이전 버전 데이터 이전: 숙제 스위치는 전부 켜짐으�
 }
 S.games.forEach(g=>{if(g.name==='젠존제로')g.name='젠존제'});   // 이미 추가해 둔 게임 이름 정정
 S.games.forEach(g=>{if(!g.preset&&(CYCLES[g.name]||PRESETS[g.name]))g.preset=g.name});
+// 새 버전에서 추가된 기본 숙제를 기존 사용자에게 한 번만 넣어 줌 (지웠다면 다시 넣지 않음)
+S.mig=S.mig||[];
+if(!S.mig.includes('sr-aftermath')){S.mig.push('sr-aftermath');
+  S.games.forEach(g=>{if(pk(g)!=='스타레일'||g.tasks.some(t=>t.text==='전쟁의 여운'))return;
+    let i=-1;g.tasks.forEach((t,k)=>{if(t.type==='weekly')i=k});
+    if(i<0)i=g.tasks.reduce((m,t,k)=>t.type==='daily'?k:m,-1);
+    g.tasks.splice(i+1,0,{id:uid(),text:'전쟁의 여운',type:'weekly',enabled:true,done:false});
+  });
+}
 S.games.forEach(g=>{const cs=CYCLES[pk(g)];if(!cs)return;
   g.tasks.forEach(t=>{if(t.type==='cycle'&&RENAME[t.text])t.text=RENAME[t.text]});
   cs.forEach((c,gr)=>c.items.forEach((x,k)=>{
